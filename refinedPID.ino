@@ -203,9 +203,3 @@ void loop()
     digitalWrite(ledok, LOW);    // Cuando entra una nueva posición se apaga el led y no se volverá a encender hasta que el motor llegue a la posición que le hayamos designado.
   }
 }
-
-// if (dInput == 0.0) ITerm += (error * ki); else ITerm -= (dInput * (kp/(ki*kd))); DURO petardea.
-// if (dInput == 0.0) ITerm += (error * ki); else ITerm -= (dInput * ki);           BLANDO normal.
-// if (dInput == 0.0) ITerm += (error * ki); else ITerm -= (dInput / kd);           BLANDO petardea.
-// if (dInput == 0.0) ITerm += (error * ki); else ITerm -= (dInput * kp);           DURO.
-// if (dInput == 0.0) ITerm += (error * ki); else ITerm -= (dInput * ki * kd * kp); DURO petardea.
