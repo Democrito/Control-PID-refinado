@@ -1,3 +1,5 @@
+// Este programa está basado en el Control PID de Brett Beauregard: http://brettbeauregard.com/blog/wp-content/uploads/2012/07/Gu%C3%ADa-de-uso-PID-para-Arduino.pdf
+
 // **********************************************  Patillaje ******************************************************************************************************
 const byte    encA = 2;              // Entrada de la señal A del encoder.
 const byte    encB = 3;              // Entrada de la señal B del encoder.
@@ -6,10 +8,10 @@ const byte    PWMB = 6;              // Salida PWM a la segunda patilla del moto
 
 // *********************************************** Variables Globales PID *****************************************************************************************
 unsigned long lastTime = 0, SampleTime = 0;                // Variables de tiempo discreto.
-double        Input = 0.0, SetPoint = 0.0;                 //     "     de posición del motor y posición a la que queremos llevar el motor (posición designada).
+double        Input = 0.0, Setpoint = 0.0;                 //     "     de posición del motor y posición a la que queremos llevar el motor (posición designada).
 double        ITerm = 0.0, dInput = 0.0, lastInput = 0.0;  //     "     de error integral, error derivativo y posición anterior del motor
 double        kp = 0.0, ki = 0.0, kd = 0.0;                // Constantes: proprocional, integral y derivativa.
-double        outMin = 0.0, outMax = 0.0;                  // Límite máximos y mínimo de la salida PID.
+double        outMin = 0.0, outMax = 0.0;                  // Límites para no sobrepasar la resolución del PWM.
 double        error = 0.0;                                 // Diferencia entre la posición real del motor y la posición designada.
 
 // **************************************************** Otras Variables *******************************************************************************************
@@ -19,7 +21,6 @@ byte          cmd = 0;                // Un byte que utilizamos para la comunica
 unsigned int  tmp = 0;                // Variable que utilizaremos para poner el tiempo de muestreo.
 double        window = 0.0;           // Ventana o margen de error.
 const byte    ledok = 13;             // El pin 13 de los Arduinos tienen una led que utilizo para mostrar que el motor ya ha llegado a la posición designada.
-double        pasOut = 0.0;           // En esta variable se guardará el valor de Out del programa principal para convertirlo en pasado.
 // ****************************************************************************************************************************************************************
 
 void encoder()                        // Encoder x4. Cuando se produzca cualquier cambio en el encoder esta parte hará que incremente o decremente el contador.
@@ -48,7 +49,7 @@ double Compute(void)
      double kn=kp;                                // Carga el valor KP (constante proporcional) en KN para poder modificarlo sin modificar el valor original.
      
      Input  = (double)contador;                   // Lectura del encoder óptico. El valor del contador se incrementa/decrementa a través de las interrupciones extrenas (pines 2 y 3).
-     error  = (SetPoint - Input)  * kn;           // Calcula el error proporcional.
+     error  = (Setpoint - Input)  * kn;           // Calcula el error proporcional.
      dInput = (Input - lastInput) * kd;           // Calcula el error derivativo.
      
      if (abs(error) < 0.1) kn = kp * 100;         // Cuando el error es muy pequeño (cuando está prácticamente en la posición designada) exagera el valor KP para "clavar" el motor en ese punto.     
@@ -104,7 +105,8 @@ void setup()                          // Inicializamos todo las variables que se
   
   attachInterrupt(digitalPinToInterrupt(encA), encoder, CHANGE); // En cualquier flanco ascendente o descendente
   attachInterrupt(digitalPinToInterrupt(encB), encoder, CHANGE); // de los pines 2 y 3, actúa la interrupción.
-  
+
+  // Límites máximo y mínimo; corresponde a Max.: 0=0V hasta 255=5V (PWMA), y Min.: 0=0V hasta -255=5V (PWMB). Ambos PWM se convertirán a la salida en valores absolutos, nunca negativos.
   outMax =  255.0;                    // Límite máximo del controlador PID.
   outMin = -outMax;                   // Límite mínimo del controlador PID.
   
@@ -117,9 +119,9 @@ void setup()                          // Inicializamos todo las variables que se
   
   SetTunings(kp, ki, kd);             // Llama a la función de sintonización y le envía los valores que hemos cargado anteriormente.
   
-  SetPoint=(double) contador;         // Para evitar que haga cosas extrañas al ponerse en marcha o después de resetear, igualamos los dos valores para que comience estando quieto el motor.
+  Setpoint=(double)contador;          // Para evitar que haga cosas extrañas al ponerse en marcha o después de resetear, igualamos los dos valores para que comience estando quieto el motor.
   
-  window = kp;                        // Ventana de error permitido. En mi caso utilizo la constante KP que normalmente vale 1.0
+  window = kp;                        // Ventana de error permitido. Uso KP y me da buen resultado, pero si tienes problemas pon una cifra decimal (ejemplo: 3.2) que se adapte a tus necesidades.
   
   imprimir();                         // Muestra los datos de sintonización y el tiempo de muestreo por el terminal serie.
   Serial.println("Posicion: 0");
@@ -128,9 +130,9 @@ void setup()                          // Inicializamos todo las variables que se
 void loop()
 {
   double Out = Compute();             // Llama a la función "Computer()" para calcular el error y darle una equivalencia de PWM y se carga en la variable 'Out'.
-
+  
   // *********************************************** Control del Motor *************************************************
-  if (abs(error) < kp)                // Cuando está muy cerca del punto designado, parar el motor;
+  if (abs(error) < kp)                // Cuando está muy cerca del punto designado, parar el motor.
   { 
     digitalWrite(PWMA, 0);            // Pone a 0 los dos pines del puente en H.
     digitalWrite(PWMB, 0);
@@ -154,36 +156,36 @@ void loop()
   if (Serial.available() > 0)        // Si recibe algo por el terminal serie...
   {
     cmd = Serial.read();             // "cmd" guarda el byte recibido.
-    if(cmd == 'w')                   // Si es la letra 'q'...
+    if(cmd == 'w')                   // Si es la letra 'w'...
     {
-      SetPoint += 5.0;               // Mover 5 pasos hacia delante.
+      Setpoint += 5.0;               // Mover 5 pasos hacia delante.
     }
     if(cmd == 'q')
     {
-      SetPoint -= 5.0;               // Aquí son esos 5 pasos pero hacia atrás.
+      Setpoint -= 5.0;               // Aquí son esos 5 pasos pero hacia atrás.
     }
     if(cmd == 's')                   // Se repite lo mismo en el resto de las teclas que le hayamos dado alguna función.
     {
-      SetPoint += 400.0;
+      Setpoint += 400.0;
     }
     if(cmd == 'a'){
-      SetPoint -= 400.0;
+      Setpoint -= 400.0;
     }
     if(cmd == 'x')
     {
-      SetPoint += 5000.0;
+      Setpoint += 5000.0;
     }
     if(cmd == 'z')
     {
-      SetPoint -= 5000.0;
+      Setpoint -= 5000.0;
     }
     if(cmd == '2')
     {
-      SetPoint += 12000.0;
+      Setpoint += 12000.0;
     }
     if(cmd == '1')
     {
-      SetPoint -= 12000.0;
+      Setpoint -= 12000.0;
     }
     
     // Esta parte decodifica los comandos para modificar las constantes PID.
@@ -192,12 +194,12 @@ void loop()
       if (cmd > 'Z') cmd -= 32;                         // Esto permite que acepte mayúsculas y minúsculas.
       switch(cmd) 
       {
-        case 'P': kp=Serial.parseFloat(); SetTunings(kp, ki, kd); imprimir(); break; // Carga las constantes y presenta en el terminal los valores de las variables que hayan sido modificadas.
+        case 'P': kp=Serial.parseFloat(); SetTunings(kp, ki, kd); imprimir(); break; // Carga las constantes y presenta en el terminal serie los valores de las variables que hayan sido modificadas.
         case 'I': ki=Serial.parseFloat(); SetTunings(kp, ki, kd); imprimir(); break;
         case 'D': kd=Serial.parseFloat(); SetTunings(kp, ki, kd); imprimir(); break;
         case 'T': tmp=Serial.parseInt();  SetSampleTime(tmp);     imprimir(); break;
         case 'K': imprimir(); break;
-        default: Serial.print("Posición: "); Serial.println((long)SetPoint);  break;
+        default: Serial.print("Posición: "); Serial.println((long)Setpoint);  break;
       }
     }
     digitalWrite(ledok, LOW);    // Cuando entra una nueva posición se apaga el led y no se volverá a encender hasta que el motor llegue a la posición que le hayamos designado.
