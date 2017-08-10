@@ -55,7 +55,7 @@ double Compute(void)
      if (abs(error) < 0.1) kn = kp * 100;         // Cuando el error es muy pequeño (cuando está prácticamente en la posición designada) exagera el valor KP para "clavar" el motor en ese punto.     
      
      if (dInput == 0.0) ITerm += (error * ki); else ITerm -= (dInput / (kn * kd)); // Esta línea permite dos cosas. 1) Suaviza la llegada a la posición designada. 2) Hace que el error integral no sea tan dependiente del error proporcional, sólo actúa cuando está muy cerca de la posición designada.
-     // Para una mayor suavidad al acercarse al punto designado puedes cambiar el "else" por este otro: else ITerm -= (dInput / (kn * ki * kd));
+     // Para una mayor suavidad al acercarse al punto designado puedes cambiar en la línea de arriba el "else" por este otro: else ITerm -= (dInput / (kn * ki * kd));
      if (ITerm > outMax) ITerm = outMax; else if (ITerm < outMin) ITerm = outMin;  // Delimita el error integral para eliminar el "efecto windup".
      
      double out = error + ITerm - dInput;          // Suma todos los errores, es la salida del control PID.
