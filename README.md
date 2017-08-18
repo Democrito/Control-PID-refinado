@@ -1,8 +1,4 @@
-# Control PID refinado para PIC.
-
-![](https://sites.google.com/site/proyectosroboticos/control-de-motores/control-pid-con-encoder/Control%20PID%20con%20PIC18F4550.PNG)
-
-
+# Control de posición para un motor DC para Arduino.
+![](https://sites.google.com/site/proyectosroboticos/control-de-motores/control-pid-con-libreria/Arduino_PID_Control.png)
+  
 Es el control PID de Brett Beauregard con unas líneas añadidas para darle un control más suave y menos brusco.
-
-Más información en este enlace: https://sites.google.com/site/proyectosroboticos/control-de-motores/control-pid-con-encoder
