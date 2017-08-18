@@ -1,4 +1,4 @@
-# Control-PID-refinado
+# Control PID refinado para PIC.
 
 ![](https://sites.google.com/site/proyectosroboticos/control-de-motores/control-pid-con-encoder/Control%20PID%20con%20PIC18F4550.PNG)
 
