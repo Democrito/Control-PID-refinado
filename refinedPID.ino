@@ -53,7 +53,7 @@ void setup()                          // Inicializamos todo las variables que se
   
   SetTunings(kp, ki, kd);             // Llama a la función de sintonización y le envía los valores que hemos cargado anteriormente.
   
-  Setpoint=(double)contador;          // Para evitar que haga cosas extrañas al ponerse en marcha o después de resetear, igualamos los dos valores para que comience estando quieto el motor.
+  Setpoint = (double)contador;        // Para evitar que haga cosas extrañas al ponerse en marcha o después de resetear, igualamos los dos valores para que comience estando quieto el motor.
   
   imprimir(false);                    // Muestra los datos de sintonización, el tiempo de muestreo y la posición por el terminal serie.
 }
