@@ -99,8 +99,8 @@ void loop()
     
     // Decodificador para modificar las constantes PID.
     boolean flags = false;
-    switch(cmd)                                                                          // Si ponemos en el terminal serie, por ejemplo "p2.5 i0.5 d40" y pulsas enter  tomará esos valores y los cargará en kp, ki y kd.
-    {                                                                                    // También se puede poner individualmente, por ejemplo "p5.5", sólo cambiará el parámetro kp, los mismo si son de dos en dos.
+    switch(cmd)                                                                         // Si ponemos en el terminal serie, por ejemplo "p2.5 i0.5 d40" y pulsas enter  tomará esos valores y los cargará en kp, ki y kd.
+    {                                                                                   // También se puede poner individualmente, por ejemplo "p5.5", sólo cambiará el parámetro kp, los mismo si son de dos en dos.
       case 'P': kp  = Serial.parseFloat(); SetTunings(kp, ki, kd); flags = true; break; // Carga las constantes y presenta en el terminal serie los valores de las variables que hayan sido modificadas.
       case 'I': ki  = Serial.parseFloat(); SetTunings(kp, ki, kd); flags = true; break;
       case 'D': kd  = Serial.parseFloat(); SetTunings(kp, ki, kd); flags = true; break;
