@@ -22,7 +22,6 @@ volatile long contador =  0;             // En esta variable se guardará los pu
 byte          ant      =  0,    act = 0; // Sólo se utiliza los dos primeros bits de estas variables y servirán para decodificar el encoder. (ant=anterior, act=actual.)
 byte          cmd      =  0;             // Un byte que utilizamos para la comunicación serie. (cmd=comando.)
 byte          pwm      =  0;             // Es el PWM real que se transformará en voltaje real en las bobinas de los motores.
-byte          flags    =  0;
 const byte    ledok    = 13;             // El pin 13 de los Arduinos tienen un led que utilizo para mostrar que el motor ya ha llegado a la posición designada.
 // ****************************************************************************************************************************************************************
 
@@ -93,7 +92,7 @@ void loop()
     cmd = Serial.read();                // "cmd" guarda el byte recibido.
     if (cmd > 31)
     {
-      flags = 0;                                          // Borramos la bandera que decide lo que hay que imprimir.
+      byte flags = 0;                                     // Borramos la bandera que decide lo que hay que imprimir.
       if (cmd >  'Z') cmd -= 32;                          // Si una letra entra en minúscula la covierte en mayúscula.
       if (cmd == 'W') { Setpoint += 5.0;     flags = 2; } // Si (por ejemplo) es la letra 'W' mueve 5 pasos hacia delante. Estos son movimientos relativos.
       if (cmd == 'Q') { Setpoint -= 5.0;     flags = 2; } // Aquí son esos 5 pasos pero hacia atrás si se pulsa la letra 'Q'.
@@ -180,9 +179,9 @@ void imprimir(byte flag) // Imprime en el terminal serie los datos de las contan
 {
   if ((flag == 1) || (flag == 3))
   {
-    Serial.print("KP=");     Serial.print(kp,3);
-    Serial.print(" KI=");    Serial.print(ki,3);
-    Serial.print(" KD=");    Serial.print(kd,3);
+    Serial.print("KP=");     Serial.print(kp);
+    Serial.print(" KI=");    Serial.print(ki);
+    Serial.print(" KD=");    Serial.print(kd);
     Serial.print(" Time=");  Serial.println(SampleTime);
   }
   if ((flag == 2) || (flag == 3))
