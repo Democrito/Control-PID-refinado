@@ -59,7 +59,7 @@ void setup()                            // Inicializamos todo las variables que 
 
 void loop()
 {
-  double Out = Compute();               // Llama a la función "Compute()" para calcular la desviación y lo carga en la variable 'Out'.
+  double Out = Compute();               // Llama a la función "Compute()" para calcular la desviación y el resultado lo carga en la variable 'Out'.
   
   // *********************************************** Control del Motor *************************************************
   if (error == 0.0)                     // Cuando está en el punto designado, parar el motor.
@@ -190,3 +190,11 @@ void imprimir(byte flag) // Imprime en el terminal serie los datos de las contan
     Serial.println((long)Setpoint);
   }
 }
+
+// Si vas a hacer pruebas de precisión en el que existe inercias y/o esfuerzos, te recomiendo modificar (sólo para experimentar) la línea que hay dentro de la función "Compute()" para el cálculo integral:
+// if ( (dInput == 0.0) || (error == 0.0) ) ITerm += (error * ki); else ITerm -= (dInput * ki);
+// y sustituirla por:
+// if ( (dInput == 0.0) || (error == 0.0) ) ITerm += (error * ki); else ITerm -= (dInput / (kp * ki * kd));
+// o por esta otra:
+// if ( (dInput == 0.0) || (error == 0.0) ) ITerm += (error * ki); else ITerm -= (error * ki);
+// Lo más probable es que no notes la diferencia pero puede haber aspectos del comportamiento del motor que te resulten interesantes.
