@@ -151,7 +151,7 @@ double Compute(void)
      dInput = (Input - lastInput) * kd;           // Calcula el error derivativo.
      
      // Esta línea permite dos cosas: 1) Suaviza la llegada a la meta. 2) El error integral se auto-ajusta a las circunstancias del motor.
-     if ( (dInput == 0.0) || (error == 0.0) ) ITerm += (error * ki); else ITerm -= (dInput * ki);
+     if ((dInput == 0.0) || (error == 0.0)) ITerm += (error * ki); else ITerm -= (dInput / (kp * ki * kd)); // ***** Ves al final de esta página para ver más información. *****
      // Delimita el error integral para eliminar el "efecto windup".
      if (ITerm > outMax) ITerm = outMax; else if (ITerm < outMin) ITerm = outMin;
      
@@ -191,10 +191,12 @@ void imprimir(byte flag) // Imprime en el terminal serie los datos de las contan
   }
 }
 
-// Si vas a hacer pruebas de precisión en el que existe inercias y/o esfuerzos, te recomiendo modificar (sólo para experimentar) la línea que hay dentro de la función "Compute()" para el cálculo integral:
-// if ( (dInput == 0.0) || (error == 0.0) ) ITerm += (error * ki); else ITerm -= (dInput * ki);
-// y sustituirla por:
+// Si vas a hacer pruebas de precisión en el que existe inercia y/o esfuerzo, te recomiendo modificar (sólo para experimentar) la línea que hay dentro de la función "Compute()"
+// para el cálculo integral:
 // if ( (dInput == 0.0) || (error == 0.0) ) ITerm += (error * ki); else ITerm -= (dInput / (kp * ki * kd));
+// y sustituirla por:
+// if ( (dInput == 0.0) || (error == 0.0) ) ITerm += (error * ki); else ITerm -= (dInput * ki);
 // o por esta otra:
 // if ( (dInput == 0.0) || (error == 0.0) ) ITerm += (error * ki); else ITerm -= (error * ki);
 // Lo más probable es que no notes la diferencia pero puede haber aspectos del comportamiento del motor que te resulten interesantes.
+
