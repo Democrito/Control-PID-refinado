@@ -21,7 +21,7 @@ double        error    = 0.0;                                    // Diferencia (
 volatile long contador =  0;             // En esta variable se guardará los pulsos del encoder y que interpreremos como distancia (o ángulo si ese fuese el caso).
 byte          ant      =  0,    act = 0; // Sólo se utiliza los dos primeros bits de estas variables y servirán para decodificar el encoder. (ant=anterior, act=actual.)
 byte          cmd      =  0;             // Un byte que utilizamos para la comunicación serie. (cmd=comando.)
-byte          pwm      =  0;             // Es el PWM real que se transformará en voltaje real en las bobinas de los motores.
+byte          pwm      =  0;             // Es el PWM, se transformará en voltaje real en las bobinas de los motores.
 const byte    ledok    = 13;             // El pin 13 de los Arduinos tienen un led que utilizo para mostrar que el motor ya ha llegado a la posición designada.
 // ****************************************************************************************************************************************************************
 
@@ -31,7 +31,7 @@ void setup()                            // Inicializamos todo las variables que 
   
   pinMode(PWMA, OUTPUT);                // Declara las dos salidas PWM para el control del motor (pin 5).
   pinMode(PWMB, OUTPUT);                //           "               "               "           (pin 6).
-  digitalWrite(PWMA, LOW);              // Y ambas salidas se inicializa a cero.
+  digitalWrite(PWMA, LOW);              // Y ambas salidas se inicializan a cero.
   digitalWrite(PWMB, LOW);
   
   TCCR0B = TCCR0B & 0b11111000 | 0x1;   // https://playground.arduino.cc/Code/PwmFrequency  &  https://playground.arduino.cc/Main/TimerPWMCheatsheet
@@ -54,7 +54,7 @@ void setup()                            // Inicializamos todo las variables que 
   
   Setpoint = (double)contador;          // Para evitar que haga cosas extrañas al ponerse en marcha o después de resetear, igualamos los dos valores para que comience estando quieto el motor.
   
-  imprimir(3);                          // Muestra los datos de sintonización, el tiempo de muestreo y la posición por el terminal serie.
+  imprimir(3);                          // Muestra las constantes de sintonización, el tiempo de muestreo y la posición por el terminal serie.
 }
 
 void loop()
@@ -71,7 +71,7 @@ void loop()
   else                                  // De no ser igual, significa que el motor ha de girar en un sentido o al contrario; esto lo determina el signo que contiene "Out".
   {
     pwm = abs(Out);                     // Transfiere a la variable pwm el valor absoluto de Out.
-    // if (pwm < 50) pwm = 50;          // Línea experimental. Se trata de hacer que el motor tenga una voltaje mínimo para que comience a girar, aunque en principio esto no es necesario.
+    // if (pwm < 50) pwm = 50;          // Línea experimental. Se trata de hacer que el motor tenga una voltaje mínimo para comenzar a girar, aunque en principio esto no es necesario.
     
     if (Out > 0.0)                      // Gira el motor en un sentido con el PWM correspondiente a su posición.
     {
@@ -115,7 +115,7 @@ void loop()
       }
       imprimir(flags);
     
-      digitalWrite(ledok, LOW);         // Cuando entra una posición nueva se apaga el led y no se volverá a encender hasta que el motor llegue a la posición que le hayamos designado.
+      if (flags == 2) digitalWrite(ledok, LOW); // Cuando entra una posición nueva se apaga el led y no se volverá a encender hasta que el motor llegue a la posición que le hayamos designado.
     }
   }
 }
@@ -140,7 +140,7 @@ void encoder()
 // Cálculo PID.
 double Compute(void)
 {
-   unsigned long now = millis();                  // Toma el número total de "ticks" que hay en ese instante. (1 tick = 1 milisengundo.)
+   unsigned long now = millis();                  // Toma el número total de milisegundos que hay en ese instante.
    unsigned long timeChange = (now - lastTime);   // Resta el tiempo actual con el último tiempo que se guardó (esto último se hace al final de esta función).
    
    if(timeChange >= SampleTime)                   // Si se cumple el tiempo de muestreo entonces calcula la salida.
@@ -150,8 +150,8 @@ double Compute(void)
      error  = (Setpoint - Input)  * kp;           // Calcula el error proporcional.
      dInput = (Input - lastInput) * kd;           // Calcula el error derivativo.
      
-     // Esta línea permite dos cosas: 1) Suaviza la llegada a la posición designada. 2) El error integral se auto-ajusta a las circunstancias del motor.
-     if ( (dInput == 0.0) || (error == 0.0) ) ITerm += (error * ki); else ITerm -= (dInput / (kp * ki * kd) );
+     // Esta línea permite dos cosas: 1) Suaviza la llegada a la meta. 2) El error integral se auto-ajusta a las circunstancias del motor.
+     if ( (dInput == 0.0) || (error == 0.0) ) ITerm += (error * ki); else ITerm -= (dInput * ki);
      // Delimita el error integral para eliminar el "efecto windup".
      if (ITerm > outMax) ITerm = outMax; else if (ITerm < outMin) ITerm = outMin;
      
