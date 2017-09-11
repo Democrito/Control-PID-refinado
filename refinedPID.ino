@@ -1,6 +1,8 @@
 // Este programa está basado en el Control PID de Brett Beauregard: http://brettbeauregard.com/blog/wp-content/uploads/2012/07/Gu%C3%ADa-de-uso-PID-para-Arduino.pdf
-// Está enfocado para el control de posición de un motor y el algoritmo original lo modifiqué para "suavizar" la respuesta de dicho motor dándole unas características únicas,
-// entre ellas un posicionamiento al punto designado mucho más suave y progresivo y permite "sintonizar" las constantes PID de un modo más intuitivo y sencillo.
+// Está enfocado para el control de posición de un motor y el algoritmo original lo modifiqué para "suavizar" la respuesta de dicho motor dándole unas características
+// únicas, entre ellas un posicionamiento al punto designado mucho más suave y progresivo y permite "sintonizar" las constantes PID de un modo más intuitivo y sencillo.
+// Si utilizas encoder de muy poca resolución, por ejemplo de 4 ppr, eleva el tiempo de muestreo a 1000 y luego ves bajando este valor hasta que encuentres una velocidad
+// de posicionamiento óptimo. En principio no hace falta tocar nada más.
 // Más información: https://sites.google.com/site/proyectosroboticos/control-de-motores/control-pid-mejorado
 
 // **********************************************  Patillaje ******************************************************************************************************
@@ -15,7 +17,7 @@ double        Input    = 0.0, Setpoint   = 0.0;                  //     "     de
 double        ITerm    = 0.0, dInput     = 0.0, lastInput = 0.0; //     "     de error integral, error derivativo y posición anterior del motor
 double        kp       = 0.0, ki         = 0.0, kd        = 0.0; // Constantes: proprocional, integral y derivativa.
 double        outMin   = 0.0, outMax     = 0.0;                  // Límites para no sobrepasar la resolución del PWM.
-double        error    = 0.0;                                    // Diferencia (o desviación) entre la posición real del motor y la posición designada.
+double        error    = 0.0;                                    // Desviación o error entre la posición real del motor y la posición designada.
 
 // **************************************************** Otras Variables *******************************************************************************************
 volatile long contador =  0;             // En esta variable se guardará los pulsos del encoder y que interpreremos como distancia (o ángulo si ese fuese el caso).
@@ -25,7 +27,7 @@ byte          pwm      =  0;             // Es el PWM, se transformará en volta
 const byte    ledok    = 13;             // El pin 13 de los Arduinos tienen un led que utilizo para mostrar que el motor ya ha llegado a la posición designada.
 // ****************************************************************************************************************************************************************
 
-void setup()                            // Inicializamos todo las variables que sean necesarias, configuramos los pines de entrada/salida y el terminal serie.
+void setup(void)                        // Inicializamos todo las variables que sean necesarias, configuramos los pines de entrada/salida y el terminal serie.
 {
   Serial.begin(115200);                 // Configura la velocidad en baudios del terminal serie. Hoy en día "115200" es soportada por la gran mayoría de computadores.
   
@@ -44,11 +46,11 @@ void setup()                            // Inicializamos todo las variables que 
   outMax =  255.0;                      // Límite máximo del controlador PID.
   outMin = -outMax;                     // Límite mínimo del controlador PID.
   
-  SampleTime = 25;                      // Se le asigna el tiempo de muestreo en milisegundos.
+  SampleTime = 23;                      // Se le asigna el tiempo de muestreo en milisegundos.
   
   kp = 1.0;                             // Constantes PID iniciales. Los valores son los adecuados para un encoder de 334 ppr (con un motor de 12V),
   ki = 0.05;                            // pero como el lector de encoder está diseñado como x4, entonces equivale a uno de 1336 ppr. (ppr = pulsos por revolución.)
-  kd = 25.0;
+  kd = 23.0;
   
   SetTunings(kp, ki, kd);               // Llama a la función de sintonización y le envía los valores que hemos cargado anteriormente.
   
@@ -57,15 +59,15 @@ void setup()                            // Inicializamos todo las variables que 
   imprimir(3);                          // Muestra las constantes de sintonización, el tiempo de muestreo y la posición por el terminal serie.
 }
 
-void loop()
+void loop(void)
 {
   double Out = Compute();               // Llama a la función "Compute()" para calcular la desviación y el resultado lo carga en la variable 'Out'.
   
   // *********************************************** Control del Motor *************************************************
   if (error == 0.0)                     // Cuando está en el punto designado, parar el motor.
   {
-    digitalWrite(PWMA, 0);              // Pone a 0 los dos pines del puente en H.
-    digitalWrite(PWMB, 0);
+    digitalWrite(PWMA, LOW);            // Pone a 0 los dos pines del puente en H.
+    digitalWrite(PWMB, LOW);
     digitalWrite(ledok, HIGH);          // Se enciende el led (pin 13) porque ya está en la posición designada.
   }
   else                                  // De no ser igual, significa que el motor ha de girar en un sentido o al contrario; esto lo determina el signo que contiene "Out".
@@ -75,12 +77,12 @@ void loop()
     
     if (Out > 0.0)                      // Gira el motor en un sentido con el PWM correspondiente a su posición.
     {
-      digitalWrite(PWMB, 0);            // Pone a 0 el segundo pin del puente en H.
+      digitalWrite(PWMB, LOW);          // Pone a 0 el segundo pin del puente en H.
       analogWrite(PWMA, pwm);           // Por el primer pin sale la señal PWM.
     }
     else                                // Gira el motor en sentido contrario con el PWM correspondiente a su posición.
     {
-      digitalWrite(PWMA, 0);            // Pone a 0 el primer pin del puente en H.
+      digitalWrite(PWMA, LOW);          // Pone a 0 el primer pin del puente en H.
       analogWrite(PWMB, pwm);           // Por el segundo pin sale la señal PWM.
     }
   }
@@ -92,16 +94,17 @@ void loop()
     cmd = Serial.read();                // "cmd" guarda el byte recibido.
     if (cmd > 31)
     {
-      byte flags = 0;                                     // Borramos la bandera que decide lo que hay que imprimir.
-      if (cmd >  'Z') cmd -= 32;                          // Si una letra entra en minúscula la covierte en mayúscula.
-      if (cmd == 'W') { Setpoint += 5.0;     flags = 2; } // Si (por ejemplo) es la letra 'W' mueve 5 pasos hacia delante. Estos son movimientos relativos.
-      if (cmd == 'Q') { Setpoint -= 5.0;     flags = 2; } // Aquí son esos 5 pasos pero hacia atrás si se pulsa la letra 'Q'.
-      if (cmd == 'S') { Setpoint += 400.0;   flags = 2; } // Se repite lo mismo en el resto de las teclas.
-      if (cmd == 'A') { Setpoint -= 400.0;   flags = 2; }
-      if (cmd == 'X') { Setpoint += 5000.0;  flags = 2; }
-      if (cmd == 'Z') { Setpoint -= 5000.0;  flags = 2; }
-      if (cmd == '2') { Setpoint += 12000.0; flags = 2; }
-      if (cmd == '1') { Setpoint -= 12000.0; flags = 2; }
+      byte flags = 0;                                       // Borramos la bandera que decide lo que hay que imprimir.
+      if (cmd >  'Z') cmd -= 32;                            // Si una letra entra en minúscula la covierte en mayúscula.
+      if (cmd == 'W') { Setpoint += 5.0;       flags = 2; } // Si (por ejemplo) es la letra 'W' mueve 5 pasos hacia delante. Estos son movimientos relativos.
+      if (cmd == 'Q') { Setpoint -= 5.0;       flags = 2; } // Aquí son esos 5 pasos pero hacia atrás si se pulsa la letra 'Q'.
+      if (cmd == 'S') { Setpoint += 400.0;     flags = 2; } // Se repite lo mismo en el resto de las teclas.
+      if (cmd == 'A') { Setpoint -= 400.0;     flags = 2; }
+      if (cmd == 'X') { Setpoint += 5000.0;    flags = 2; }
+      if (cmd == 'Z') { Setpoint -= 5000.0;    flags = 2; }
+      if (cmd == '2') { Setpoint += 12000.0;   flags = 2; }
+      if (cmd == '1') { Setpoint -= 12000.0;   flags = 2; }
+      if (cmd == '0') { Setpoint = 0.0;        flags = 2; } // Ir a Inicio.
       
       // Decodificador para modificar las constantes PID.
       switch(cmd)                                                                      // Si ponemos en el terminal serie, por ejemplo "p2.5 i0.5 d40" y pulsas enter  tomará esos valores y los cargará en kp, ki y kd.
@@ -120,23 +123,6 @@ void loop()
   }
 }
 
-// Encoder x4. Cuando se produzca cualquier cambio en el encoder esta parte hará que incremente o decremente el contador.
-void encoder()
-{
-    ant=act;                            // Guardamos el valor 'act' en 'ant' para convertirlo en pasado.
-    act=PIND & 12;                      // Guardamos en 'act' el valor que hay en ese instante en el encoder y hacemos un
-                                        // enmascaramiento para aislar los dos únicos bits que utilizamos para esta finalidad.
-    if(ant==12 && act==4)  contador++;  // Incrementa el contador si el encoder se mueve hacia delante.
-    if(ant==4  && act==0)  contador++;
-    if(ant==0  && act==8)  contador++;
-    if(ant==8  && act==12) contador++;
-    
-    if(ant==4  && act==12) contador--;  // Decrementa el contador si el encoder se mueve hacia atrás.
-    if(ant==0  && act==4)  contador--;
-    if(ant==8  && act==0)  contador--;
-    if(ant==12 && act==8)  contador--;
-}
-
 // Cálculo PID.
 double Compute(void)
 {
@@ -151,7 +137,7 @@ double Compute(void)
      dInput = (Input - lastInput) * kd;           // Calcula el error derivativo.
      
      // Esta línea permite dos cosas: 1) Suaviza la llegada a la meta. 2) El error integral se auto-ajusta a las circunstancias del motor.
-     if ((dInput == 0.0) || (error == 0.0)) ITerm += (error * ki); else ITerm -= (dInput / (kp * ki * kd)); // ***** Ves al final de esta página para ver más información. *****
+     if ((dInput == 0.0) || (error == 0.0)) ITerm += (error * ki); else ITerm -= (dInput * ki);
      // Delimita el error integral para eliminar el "efecto windup".
      if (ITerm > outMax) ITerm = outMax; else if (ITerm < outMin) ITerm = outMin;
      
@@ -174,8 +160,25 @@ void SetTunings(double kp, double ki, double kd)  // A las constantes KI y KD se
    kd = kd / SampleTimeInSec;
 }
 
+// Encoder x4. Cuando se produzca cualquier cambio en el encoder esta parte hará que incremente o decremente el contador.
+void encoder(void)
+{
+    ant=act;                            // Guardamos el valor 'act' en 'ant' para convertirlo en pasado.
+    act=PIND & 12;                      // Guardamos en 'act' el valor que hay en ese instante en el encoder y hacemos un
+                                        // enmascaramiento para aislar los dos únicos bits que utilizamos para esta finalidad.
+    if(ant==12 && act==4)  contador++;  // Incrementa el contador si el encoder se mueve hacia delante.
+    if(ant==4  && act==0)  contador++;
+    if(ant==0  && act==8)  contador++;
+    if(ant==8  && act==12) contador++;
+    
+    if(ant==4  && act==12) contador--;  // Decrementa el contador si el encoder se mueve hacia atrás.
+    if(ant==0  && act==4)  contador--;
+    if(ant==8  && act==0)  contador--;
+    if(ant==12 && act==8)  contador--;
+}
+
 // Función para imprimir los datos en el terminal serie.
-void imprimir(byte flag) // Imprime en el terminal serie los datos de las contantes PID, tiempo de muestreo y posición. En los demás casos sólo imprime la posición del motor.
+void imprimir(byte flag) // Imprime en el terminal serie los datos de las contantes PID, tiempo de muestreo y posición. Según las necesidades se muestran algunos datos o todos ellos.
 {
   if ((flag == 1) || (flag == 3))
   {
@@ -190,13 +193,3 @@ void imprimir(byte flag) // Imprime en el terminal serie los datos de las contan
     Serial.println((long)Setpoint);
   }
 }
-
-// Si vas a hacer pruebas de precisión en el que existe inercia y/o esfuerzo, te recomiendo modificar (sólo para experimentar) la línea que hay dentro de la función "Compute()"
-// para el cálculo integral:
-// if ( (dInput == 0.0) || (error == 0.0) ) ITerm += (error * ki); else ITerm -= (dInput / (kp * ki * kd));
-// y sustituirla por:
-// if ( (dInput == 0.0) || (error == 0.0) ) ITerm += (error * ki); else ITerm -= (dInput * ki);
-// o por esta otra:
-// if ( (dInput == 0.0) || (error == 0.0) ) ITerm += (error * ki); else ITerm -= (error * ki);
-// Lo más probable es que no notes la diferencia pero puede haber aspectos del comportamiento del motor que te resulten interesantes.
-
