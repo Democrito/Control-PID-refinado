@@ -1,0 +1,87 @@
+<div>
+<div>
+<div style="text-align:center"><font color="#cc0000" size="5"><font color="#cc0000" size="5" style="" face="trebuchet ms, sans-serif">
+<div style="color: rgb(0, 0, 0); font-size: 16px; text-align: start;">
+<div style="text-align: center;">
+<div style=""><font color="#cc0000" size="5" style=""><b style="">Comunicación a través del terminal serie.</b></font></div>
+<div style="text-align: start;"><br>
+</div>
+<div style="text-align: start;">Cuando estés en el terminal serie no importará si la letra que escribimos es en mayúscula o minúscula, dentro del programa se convertirá en mayúscula.</div>
+<div style="text-align: start;"><b><br>
+</b></div>
+<div style="text-align: start;"><b>Posición relativa</b>&nbsp;(sumar una cantidad a la posición en la que está el motor):</div>
+<div style="text-align: start;"><span style="background-color:transparent">Desde el terminal serie, las letras que hacen mover el motor son Q-W, A-S, Z-X, 1-2. Cada par es derecha o izquierda, por ejemplo, Q es izquierda y W es derecha, así con el resto. Escribes una de esas letras y al pulsar enter (o dándole a "Enviar"), el motor se moverá cierto número de pasos. Q y W es una distancia corta, A y S una distancia media, Z y X una distancia más larga y finalmente la tecla 1 y 2 es una distancia aún más larga. Si necesitas una distancia relativa muy larga puedes poner por ejemplo "11111" y pulsar enter, aunque lo mejor para esto es usar posiciones absolutas.</span></div>
+<div style="text-align: start;"><span style="background-color:transparent"><br>
+</span></div>
+<div style="text-align: start;"><span style="background-color:transparent"><b>Posición absoluta</b>: Escribes 'G' junto a un valor numérico y le das a enter, por ejemplo: "G23000" e irá a esa posición.</span></div>
+<div style="text-align: start;"><br>
+<b>Modificar las constantes PID y tiempo de muestreo</b><span style="background-color:transparent">:</span></div>
+<div style="text-align: start;"><br>
+Ponemos 'P' y el valor de la constante proporcional.<br>
+Ponemos 'I' &nbsp;y el valor de la constante&nbsp;integral.<br>
+Ponemos 'D' y el valor de la constante&nbsp;derivativa.</div>
+<div style="text-align: start;">Ponemos 'T' y el valor en milisegundos del tiempo de muestreo.<br>
+<br>
+<br>
+</div>
+<div style="text-align: start;"><br>
+</div>
+<div style="text-align: start;">
+<div><img border="0" src="https://sites.google.com/site/proyectosroboticos/_/rsrc/1503855988202/control-de-motores/control-pid-mejorado/Configuracion%20de%20constantes%20PID.PNG" style="display:block;margin-right:auto;margin-left:auto;text-align:center"></div>
+<div><br>
+</div>
+Por ejemplo, en el terminal serie ponemos: "D20" (y pulsamos enter), cambiará la constante KD a 20.&nbsp;Se puede utilizar decimales, por ejemplo "D21.35". Nótese que el decimal es un punto, no una coma, esto es importante.&nbsp;También se puede poner varias a la vez y han de ir obligatoriamente separadas por un espacio.<br>
+<br>
+Ejemplos:<br>
+<br>
+P1 D22.1 (y pulsamos enter)</div>
+<div style="text-align: start;">P1.5 &nbsp;D20.3 T14 (y pulsamos enter)</div>
+<div style="text-align: start;"><br>
+Arduino te responderá con los datos de las constantes PID y tiempo de muestreo que hay en ese momento.<br>
+<br>
+Si pulsas la letra "K" y le damos a enter, también te saldrá los valores de las constantes PID y tiempo de muestreo. Esto nos sirve para consultarlas en cualquier momento, porque cuando se hace pruebas el terminal se llena de número y es fácil olvidar cómo estaban esos parámetros.<br>
+<br>
+Métete dentro del programa y modifica la cantidad de distancia que ha de recorrer a tu gusto, añadir teclas con otras distancias, etc.</div>
+</div>
+<div style="text-align: center;"><b style="background-color:transparent;font-size:x-large"><font color="#cc0000"><br>
+</font></b></div>
+<div style="text-align: center;"><b style="background-color:transparent;font-size:x-large"><font color="#cc0000">Sintonización del Controlador PID.</font></b></div>
+<br>
+<font color="#cc0000" size="5" style=""><font color="#cc0000" size="5"><span style="color: rgb(0, 0, 0); font-size: medium; background-color: transparent;">En el código tengo puesto las constantes PID que son óptimas para mi caso. En el tuyo es probable que el motor sea diferente y/o tengas un encoder con otra resolución. Estos cambios hace que mis constantes PID puedan ser diferentes a las que tú necesitas, entonces hay que&nbsp;re-sintonizar&nbsp;dichas constantes.</span></font></font></div>
+<div style="color: rgb(0, 0, 0); font-size: 16px; text-align: start;"><font size="3"><br>
+</font></div>
+<div style="color: rgb(0, 0, 0); font-size: 16px; text-align: start;"><font size="3">Se trata de ir probando valores para las constantes KP, KI, KD y tiempo de muestreo.</font></div>
+<div style="color: rgb(0, 0, 0); font-size: 16px; text-align: start;">
+<ul><li><font style="background-color:transparent"><b>Control proporcional</b>: Este es el control más importante, el que realmente mueve el motor la mayor parte del recorrido. Imagina que KP=1, KI=0 y KD=0 (al poner 0 anulamos ese tipo de control). Ahora imagina que el motor está en la posición 0 y queremos llevarlo a la posición 23000. El control proporcional tendrá casi todo recorrido el valor de 255 (el valor máximo del PWM) hasta que finalmente llegamos a la posición 23000-255, es decir a posición&nbsp;</font><span style="background-color:transparent"><font size="3">22745, a partir de ese momento el valor del PWM irá bajando en proporción a la posición en la que se va acercando al punto designado. Si aumentamos el valor de KP, haríamos que se acercase un poco más, pero esto tiene un límite. Si el motor está libre de carga, por regla general, lo que sucede es que por la propia inercia del movimiento tiende a pasarse de la posición designada y se produce oscilaciones&nbsp;cada vez más lenta (si KP es lo suficientemente bajo, de lo contrario no pararía de hacerlo), y aún así no se pone en el lugar que le pedíamos, sino un poco más allá o más acá de la posición designada.</font></span></li></ul>
+</div>
+</font></font>
+<div style="text-align:start">
+<ul><li><font face="trebuchet ms, sans-serif"><font color="#cc0000" size="5"><font color="#cc0000" size="5"><b style="color:rgb(0,0,0);font-size:medium;background-color:transparent">Control derivativo</b></font></font>&nbsp;(o diferencial)<font color="#cc0000" size="5"><font color="#cc0000" size="5"><font color="#000000" size="3">: La velocidad es una derivada, por eso se llama así. El control derivativo lo que hace es restar velocidad al motor en la medida que se acerca al punto designado. Este tipo de control elimina la oscilación que mencioné anteriormente en el control proporcional y también lo hará con el control integral. Un valor demasiado alto en la constante derivativa (KD) produce comportamientos especialmente ruidosos u oscilaciones arbitrarias. El control derivativo es muy sensible a los cambios porque trata de darle al motor la velocidad de llegada correcta.</font></font></font></font></li></ul>
+<font color="#cc0000" size="5"><font color="#cc0000" size="5" face="trebuchet ms, sans-serif">
+<ul style="color: rgb(0, 0, 0); font-size: 16px;"><li><b style="background-color:transparent">Control Integral</b><span style="background-color:transparent">: El control proporcional "intenta" llegar a la meta, el derivativo ajusta la velocidad, por tanto evita las oscilaciones, pues el control integral es la parte más sensible de este asunto: Cuando el motor se acerca a la meta, en el mejor de los casos, lo que hace es que si ve que todavía falta un poco para llegar al punto designado eleva el valor del PWM, hasta que consigue hacer que el motor se mueva lo suficiente. Una manera de experimentar esto es poner un valor muy pequeño a la constante integral (KI), si mueves el eje del motor notarás en tus dedos que hace un esfuerzo progresivo (cada vez más fuerte) para posicionarse en el mismo punto que en el que estaba. Un valor alto en KI sucede lo mismo que con KP y KD, el eje del motor oscila exageradamente.</span></li></ul>
+<ul style="color: rgb(0, 0, 0); font-size: 16px;"><li><b style="background-color:transparent">Tiempo de muestreo</b><span style="background-color:transparent">: Esta parte es también muy importante. Es la unidad de tiempo que le dice al Arduino cada cuánto tiempo ha de realizar los cálculos. No actúa sobre el control proporcional, pero sí lo hace sobre el control integral y derivativo por razones matemáticamente obvias. El tiempo de muestreo es más importante de lo que parece y en la medida que se modifica este parámetro observarás que mejora o empeora el comportamiento del motor.</span></li></ul>
+</font></font></div>
+</div>
+</div>
+<div><b><font face="trebuchet ms, sans-serif">En resumen:</font></b></div>
+<div>
+<div><span style="background-color:transparent"><font face="trebuchet ms, sans-serif">KP = Es la que realmente hace mover al motor la mayor parte del recorrido.</font></span></div>
+<div><span style="background-color:transparent"><font face="trebuchet ms, sans-serif">KI &nbsp;= Incrementa, en tiempos discretos, el valor del PWM, y lo hace en proporción a la desviación.</font></span></div>
+<div><span style="background-color:transparent"><font face="trebuchet ms, sans-serif">KD = Ajusta la velocidad de llegada y eso tiene el efecto añadido de eliminar las oscilaciones que pueda provocar el control proporcional e integral.</font></span></div>
+<div><span style="background-color:transparent"><font face="trebuchet ms, sans-serif">SampleTime = Acelera o disminuye los efectos del control integral y derivativo.</font></span></div>
+</div>
+<div><font face="trebuchet ms, sans-serif"><br>
+</font></div>
+<div><font face="trebuchet ms, sans-serif">El control de posición de motores con control PID no es sencillo, pero a medida que acumules experiencia sabrás qué valores has de poner en esas constantes, hasta dejarlo perfecto. Mi consejo es comenzar con KI=0 (para anular el control integral), y poner KP=1 y KD=1. Entonces haces mover al motor hacia un lado y hacia otro, y si ves que el motor se pasa, aumentas KD, hasta que finalmente deje de hacerlo. Aumentar la constante KP nos daría mucha velocidad en el posicionamiento, pero si te excedes se pondrá a oscilar. Una vez que tengas todo esto de manera aceptable nos falta un último empuje y de eso se encarga el control integral. Para la constante integral has de comenzar con valores muy pequeños y poco a poco ir elevando esa cifra hasta conseguir el ajuste perfecto.</font></div>
+</div>
+<div><font face="trebuchet ms, sans-serif"><br>
+</font></div>
+<div>
+<div style="text-align:center"><font color="#cc0000" size="5" face="trebuchet ms, sans-serif"><b>Antes de ponerlo en marcha y otras cuestiones:</b></font></div>
+<ul style="text-align:-webkit-auto"><li><span style="background-color:transparent"><font face="trebuchet ms, sans-serif">Si al poner en marcha el Arduino y al mover el eje el motor gira sin parar, significa que la polaridad del motor está invertida por tanto has de enrocar (intercambiar) las dos señales del PWM que va al puente en H.</font></span></li></ul>
+<ul style="text-align:-webkit-auto"><li><font face="trebuchet ms, sans-serif">Si por la razón que sea necesitas que el motor gire en sentido contrario a como lo hace normalmente, has de enrocar (intercambiar) las entradas del encoder,&nbsp;<u>y también</u>, la polaridad del motor (desde el puente en H).</font></li></ul>
+<ul><li><font face="trebuchet ms, sans-serif">Podría suceder que el encoder que tu utilices tenga mucha resolución y/o que el motor sea especialmente veloz; el propio Arduino ha de contar los pulsos y si el encoder tiene mucha resolución podría perderlos porque no le daría tiempo a contarlos. Si este es tu caso y sólo quieres probar el control PID que propongo en esta página, has de bajar la velocidad del motor alimentándolo con una tensión menor. Yo he utilizado un encoder de 334 ppr con un motor de 12V y no he tenido problemas.</font></li></ul>
+<ul><li><font face="trebuchet ms, sans-serif">El puente en H puede ser cualquiera que se adapte al motor que vayas a utilizar. Para los que no tienen mucha experiencia en puentes en H decirles que es importante que tenga protección para cuando los dos niveles de entrada están en "alto", y ha de llevar los 4 diodos de protección para eliminar las corrientes inversas que producen las bobinas del motor. Yo utilizo puentes en H que compro en Internet y a día de hoy son muy económicos y están preparados para controlar motores y bobinas.</font></li></ul>
+<ul><li><font face="trebuchet ms, sans-serif">En&nbsp;<a href="https://sites.google.com/site/proyectosroboticos/control-de-motores/modelos-de-encoders-opticos" target="_blank"><font color="#0000ff"><b>este enlace</b></font></a>&nbsp;puedes ver la configuración del patillaje de algunos modelos de encoders ópticos de media/alta resolución.</font></li></ul>
+<ul><li><font face="trebuchet ms, sans-serif">Desde el terminal serie podemos poner cifras enteras y decimales para modificar las constantes PID, pero si haces una modificación de esas constantes desde dentro del programa (no desde el terminal) has de utilizar siempre la notación en coma flotante, porque esas constantes son del tipo "double" y si no le pones el punto decimal el compilador te lo interpretará como entero y eso puede provocar errores en los cálculos.</font></li></ul>
+</div>
