@@ -1,5 +1,5 @@
 // Este programa es el algoritmo PID "refinedPID.ino" simplificado.
-// Si utilizas encoder de muy poca resolución, por ejemplo de 4 ppr, eleva el tiempo de muestreo a 1000 y luego ves bajando este valor hasta que encuentres una velocidad
+// Para motores de muy poca resolución, por ejemplo de 4 ppr, eleva el tiempo de muestreo a 1000 y luego ves bajando este valor hasta que encuentres una velocidad
 // de posicionamiento óptimo. En principio no hace falta tocar nada más.
 // Más información: https://sites.google.com/site/proyectosroboticos/control-de-motores/control-pid-mejorado
 
@@ -34,9 +34,8 @@ void setup(void)                        // Inicializamos todo las variables que 
   digitalWrite(PWMA, LOW);              // Y ambas salidas se inicializan a cero.
   digitalWrite(PWMB, LOW);
   
-  TCCR0B = TCCR0B & 0b11111000 | 0x1;   // https://playground.arduino.cc/Code/PwmFrequency  &  https://playground.arduino.cc/Main/TimerPWMCheatsheet
-  TCCR1B = TCCR1B & 0b11111000 | 0x1;   // Aquí podemos variar la frecuencia del PWM con un número de 1 (32KHz) hasta 7 (32Hz). El número que pongamos es un divisor de frecuencia. Min.=7, Max.=1.
-  
+  TCCR0B = TCCR0B & B11111000 | 1;   // Configuración de la frecuencia del PWM para los pines 5 y 6. https://arduino-info.wikispaces.com/Arduino-PWM-Frequency
+                                     // Podemos variar la frecuencia del PWM con un número de 1 (32KHz) hasta 7 (32Hz). El número que pongamos es un divisor de frecuencia. Min.=7, Max.=1. Está a la máxima frecuencia y es como mejor resultado me ha dado y además es silencioso.
   attachInterrupt(digitalPinToInterrupt(encA), encoder, CHANGE); // En cualquier flanco ascendente o descendente
   attachInterrupt(digitalPinToInterrupt(encB), encoder, CHANGE); // en los pines 2 y 3 actúa la interrupción.
   
@@ -44,7 +43,7 @@ void setup(void)                        // Inicializamos todo las variables que 
   outMax =  255.0;                      // Límite máximo del controlador PID.
   outMin = -outMax;                     // Límite mínimo del controlador PID.
   
-  SampleTime = 23;                      // Se le asigna el tiempo de muestreo en milisegundos.
+  SampleTime = 50;                      // Se le asigna el tiempo de muestreo en milisegundos.
   
   kp = 1.0;                             // Constantes PID iniciales. Los valores son los adecuados para un encoder de 334 ppr (con un motor de 12V),
   ki = 0.05;                            // pero como el lector de encoder está diseñado como x4, entonces equivale a uno de 1336 ppr. (ppr = pulsos por revolución.)
@@ -62,8 +61,8 @@ void loop(void)
   // *********************************************** Control del Motor *************************************************
   if (error == 0.0)                     // Cuando está en el punto designado, parar el motor.
   {
-    digitalWrite(PWMA, 0);              // Pone a 0 los dos pines del puente en H.
-    digitalWrite(PWMB, 0);
+    digitalWrite(PWMA, LOW);            // Pone a 0 los dos pines del puente en H.
+    digitalWrite(PWMB, LOW);
     digitalWrite(ledok, HIGH);          // Se enciende el led (pin 13) porque ya está en la posición designada.
   }
   else                                  // De no ser igual, significa que el motor ha de girar en un sentido o al contrario; esto lo determina el signo que contiene "Out".
@@ -90,17 +89,17 @@ void loop(void)
     cmd = Serial.read();                // "cmd" guarda el byte recibido.
     if (cmd > 31)
     {
-      byte flags = 0;                                     // Borramos la bandera que decide lo que hay que imprimir.
-      if (cmd >  'Z') cmd -= 32;                          // Si una letra entra en minúscula la covierte en mayúscula.
-      if (cmd == 'W') { Setpoint += 5.0;     flags = 2; } // Si (por ejemplo) es la letra 'W' mueve 5 pasos hacia delante. Estos son movimientos relativos.
-      if (cmd == 'Q') { Setpoint -= 5.0;     flags = 2; } // Aquí son esos 5 pasos pero hacia atrás si se pulsa la letra 'Q'.
-      if (cmd == 'S') { Setpoint += 400.0;   flags = 2; } // Se repite lo mismo en el resto de las teclas.
+      byte flags = 0;                                      // Borramos la bandera que decide lo que hay que imprimir.
+      if (cmd >  'Z') cmd -= 32;                           // Si una letra entra en minúscula la covierte en mayúscula.
+      if (cmd == 'W') { Setpoint += 5.0;     flags = 2; }  // Si (por ejemplo) es la letra 'W' mueve 5 pasos hacia delante. Estos son movimientos relativos.
+      if (cmd == 'Q') { Setpoint -= 5.0;     flags = 2; }  // Aquí son esos 5 pasos pero hacia atrás si se pulsa la letra 'Q'.
+      if (cmd == 'S') { Setpoint += 400.0;   flags = 2; }  // Se repite lo mismo en el resto de las teclas.
       if (cmd == 'A') { Setpoint -= 400.0;   flags = 2; }
       if (cmd == 'X') { Setpoint += 5000.0;  flags = 2; }
       if (cmd == 'Z') { Setpoint -= 5000.0;  flags = 2; }
       if (cmd == '2') { Setpoint += 12000.0; flags = 2; }
       if (cmd == '1') { Setpoint -= 12000.0; flags = 2; }
-      if (cmd == '0') { Setpoint = 0.0;      flags = 2; } // Ir a Inicio.
+      if (cmd == '0') { Setpoint = 0.0;      flags = 2; }  // Ir a Inicio.
       
       // Decodificador para modificar las constantes PID.
       switch(cmd)                                          // Si ponemos en el terminal serie, por ejemplo "P2.5 I0.5 D40" y pulsas enter  tomará esos valores y los cargará en kp, ki y kd.
@@ -112,9 +111,9 @@ void loop(void)
         case 'G': Setpoint   = Serial.parseFloat(); flags = 2; break; // Esta línea permite introducir una posición absoluta. Ex: G23000 (y luego enter) e irá a esa posición.
         case 'K':                                   flags = 3; break;
       }
-      imprimir(flags);
-    
       if (flags == 2) digitalWrite(ledok, LOW); // Cuando entra una posición nueva se apaga el led y no se volverá a encender hasta que el motor llegue a la posición que le hayamos designado.
+      
+      imprimir(flags);
     }
   }
 }
