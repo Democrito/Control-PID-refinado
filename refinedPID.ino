@@ -1,7 +1,7 @@
 // Este programa está basado en el Control PID de Brett Beauregard: http://brettbeauregard.com/blog/wp-content/uploads/2012/07/Gu%C3%ADa-de-uso-PID-para-Arduino.pdf
 // Está enfocado para el control de posición de un motor y el algoritmo original lo modifiqué para "suavizar" la respuesta de dicho motor dándole unas características
 // únicas, entre ellas un posicionamiento al punto designado mucho más suave y progresivo y permite "sintonizar" las constantes PID de un modo más intuitivo y sencillo.
-// Si utilizas encoder de muy poca resolución, por ejemplo de 4 ppr, eleva el tiempo de muestreo a 1000 y luego ves bajando este valor hasta que encuentres una velocidad
+// Para motores de muy poca resolución, por ejemplo de 4 ppr, eleva el tiempo de muestreo a 1000 y luego ves bajando este valor hasta que encuentres una velocidad
 // de posicionamiento óptimo. En principio no hace falta tocar nada más.
 // Más información: https://sites.google.com/site/proyectosroboticos/control-de-motores/control-pid-mejorado
 
@@ -36,9 +36,8 @@ void setup(void)                        // Inicializamos todo las variables que 
   digitalWrite(PWMA, LOW);              // Y ambas salidas se inicializan a cero.
   digitalWrite(PWMB, LOW);
   
-  TCCR0B = TCCR0B & 0b11111000 | 0x1;   // https://playground.arduino.cc/Code/PwmFrequency  &  https://playground.arduino.cc/Main/TimerPWMCheatsheet
-  TCCR1B = TCCR1B & 0b11111000 | 0x1;   // Aquí podemos variar la frecuencia del PWM con un número de 1 (32KHz) hasta 7 (32Hz). El número que pongamos es un divisor de frecuencia. Min.=7, Max.=1.
-  
+  TCCR0B = TCCR0B & B11111000 | 1;   // Configuración de la frecuencia del PWM para los pines 5 y 6. https://arduino-info.wikispaces.com/Arduino-PWM-Frequency
+                                     // Podemos variar la frecuencia del PWM con un número de 1 (32KHz) hasta 7 (32Hz). El número que pongamos es un divisor de frecuencia. Min.=7, Max.=1. Está a la máxima frecuencia y es como mejor resultado me ha dado y además es silencioso. 
   attachInterrupt(digitalPinToInterrupt(encA), encoder, CHANGE); // En cualquier flanco ascendente o descendente
   attachInterrupt(digitalPinToInterrupt(encB), encoder, CHANGE); // en los pines 2 y 3 actúa la interrupción.
   
@@ -46,11 +45,11 @@ void setup(void)                        // Inicializamos todo las variables que 
   outMax =  255.0;                      // Límite máximo del controlador PID.
   outMin = -outMax;                     // Límite mínimo del controlador PID.
   
-  SampleTime = 23;                      // Se le asigna el tiempo de muestreo en milisegundos.
+  SampleTime = 50;                      // Se le asigna el tiempo de muestreo en milisegundos.
   
   kp = 1.0;                             // Constantes PID iniciales. Los valores son los adecuados para un encoder de 334 ppr (con un motor de 12V),
   ki = 0.05;                            // pero como el lector de encoder está diseñado como x4, entonces equivale a uno de 1336 ppr. (ppr = pulsos por revolución.)
-  kd = 23.0;
+  kd = 25.0;
   
   SetTunings(kp, ki, kd);               // Llama a la función de sintonización y le envía los valores que hemos cargado anteriormente.
   
@@ -116,9 +115,9 @@ void loop(void)
         case 'G': Setpoint   = Serial.parseFloat();                  flags = 2; break; // Esta línea permite introducir una posición absoluta. Ex: g13360 (y luego enter) e irá a esa posición.
         case 'K':                                                    flags = 3; break;
       }
-      imprimir(flags);
-    
       if (flags == 2) digitalWrite(ledok, LOW); // Cuando entra una posición nueva se apaga el led y no se volverá a encender hasta que el motor llegue a la posición que le hayamos designado.
+      
+      imprimir(flags);
     }
   }
 }
