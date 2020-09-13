@@ -132,7 +132,7 @@ double Compute(void)
      dInput = (Input - lastInput) * kd;           // Calcula el error derivativo.
      
      // Esta línea permite dos cosas: 1) Suaviza la llegada a la meta. 2) El error integral se auto-ajusta a las circunstancias del motor.
-     if ((dInput == 0.0) || (error == 0.0)) ITerm += (error * ki); else ITerm -= (dInput * ki);
+     if (dInput == 0.0)  ITerm += (error * ki); else ITerm -= (dInput * ki);
      // Acota el error integral para eliminar el "efecto windup".
      if (ITerm > outMax) ITerm = outMax; else if (ITerm < outMin) ITerm = outMin;
      
