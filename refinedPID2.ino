@@ -173,7 +173,7 @@ void imprimir(byte flag) // Imprime en el terminal serie los datos de las contan
     Serial.print(" KD=");    Serial.print(kd);
     Serial.print(" Time=");  Serial.println(SampleTime);
   }
-  if ((flag == 2) || (flag == 3)) // Aquí se puede eliminar "flag == 3". Cuando vuelva a montar el proyecto eliminaré esa parte. No hagp cambios hasta haber comprobado que todo funciona correctamente.
+  if ((flag == 2) || (flag == 3))
   {
     Serial.print("Posicion:");
     Serial.println((long)Setpoint);
